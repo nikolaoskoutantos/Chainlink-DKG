@@ -1,51 +1,29 @@
-# Reference https://stackoverflow.com/questions/74314536/running-local-chainlink-node-with-docker-error-invalid-compose-project
-version: "3.8"
 services:
-    pg-chainlink:
-        container_name: pg-chainlink
-        image: "postgres"
-        restart: unless-stopped
-        ports:
-            - "5432:5432"
-        env_file:
-            - "database.env"
-        volumes:
-            - "~/data:/var/lib/postgressql/data/"
-    rpc-failover:
-        restart: unless-stopped
-        container_name: rpc-failover
-        image: "fiews/cl-eth-failover"
-        command: "wss://goerli.infura.io/ws/v3/<api-key>"
-        ports:
-          - "4000:4000"
-    link-main-node:
-        container_name: link-main-node
-        restart: unless-stopped
-        image: "smartcontract/chainlink:1.4.1-root"
-        ports:
-          - "6688:6688"
-        env_file:
-          - ".env"
-        volumes:
-          - "~/.chainlink:/chainlink"
-        command: "local n -p /chainlink/.password -a /chainlink/.api"
-        depends_on:
-            - "pg-chainlink"
-            - "rpc-failover"
-        network_mode: "host"
-    link-failover-node:
-        container_name: link-failover-node
-        restart: unless-stopped
-        image: "smartcontract/chainlink:1.4.1-root"
-        ports:
-          - "6688:6688"
-        env_file:
-          - ".env"
-        volumes:
-          - "~/.chainlink:/chainlink"
-        command: "local n -p /chainlink/.password -a /chainlink/.api"
-        depends_on:
-            - "pg-chainlink"
-            - "rpc-failover"
-            - "link-main-node"
-        network_mode: "host"
+  postgres:
+    image: postgres:latest
+    container_name: chain-postgres
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_USER: chainlink
+      POSTGRES_DB: chainlink
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  chainlink:
+    image: smartcontract/chainlink:2.17.0
+    container_name: chainlink-compose
+    platform: linux/x86_64/v8
+    ports:
+      - "6688:6688"
+    volumes:
+      - ../chainlink-sepolia:/chainlink
+    depends_on:
+      - postgres
+    command: ["node", "-config", "/chainlink/config.toml", "-secrets", "/chainlink/secrets.toml", "start","-a", "/chainlink/.api"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  postgres_data:

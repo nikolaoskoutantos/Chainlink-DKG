@@ -7,6 +7,10 @@ const port = process.env.EA_PORT || 8080
 
 app.use(bodyParser.json())
 
+app.get('/health', (req, res) => {
+  res.status(200).send('Server is up and running!');
+});
+
 app.post('/', (req, res) => {
   console.log('POST Data: ', req.body)
   createRequest(req.body, (status, result) => {
@@ -15,4 +19,7 @@ app.post('/', (req, res) => {
   })
 })
 
-app.listen(port, () => console.log(`Listening on port ${port}!`))
+// Start the server
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is listening on port ${port}`);
+});

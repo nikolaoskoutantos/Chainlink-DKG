@@ -1,25 +1,157 @@
-const createRequest = require('./index').createRequest
+const { handleWeatherRequest, handleForecastRequest } = require('./index');
+const express = require('express');
+const bodyParser = require('body-parser');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 
-const express = require('express')
-const bodyParser = require('body-parser')
-const app = express()
-const port = process.env.EA_PORT || 8080
+const app = express();
+const port = process.env.EA_PORT || 8080;
 
-app.use(bodyParser.json())
+// Middleware
+app.use(bodyParser.json());
 
+// Swagger definition
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'Weather External Adapter API',
+    version: '1.0.0',
+    description: 'An API to fetch weather information using Chainlink External Adapter with multiple services.',
+  },
+  servers: [
+    {
+      url: `http://localhost:${port}`, // Replace with your server's base URL
+    },
+  ],
+};
+
+// Swagger options
+const options = {
+  swaggerDefinition,
+  apis: ['./app.js'], // Path to this file for endpoint documentation
+};
+
+// Generate Swagger docs
+const swaggerSpec = swaggerJsdoc(options);
+
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Optional: Serve raw Swagger JSON
+app.get('/swagger.json', (req, res) => {
+  res.json(swaggerSpec);
+});
+
+// Health check endpoint
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check for the server
+ *     responses:
+ *       200:
+ *         description: Server is up and running!
+ */
 app.get('/health', (req, res) => {
   res.status(200).send('Server is up and running!');
 });
 
-app.post('/', (req, res) => {
-  console.log('POST Data: ', req.body)
-  createRequest(req.body, (status, result) => {
-    console.log('Result: ', result)
-    res.status(status).json(result)
-  })
-})
+// Main POST endpoint for current weather
+/**
+ * @swagger
+ * /:
+ *   post:
+ *     summary: Fetch current weather data
+ *     description: Fetch current weather data using the specified weather service (OpenWeather or Open-Meteo).
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *               - data
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 description: Job Run ID
+ *               data:
+ *                 type: object
+ *                 required:
+ *                   - service
+ *                   - lat
+ *                   - lon
+ *                 properties:
+ *                   service:
+ *                     type: string
+ *                     description: The weather service to fetch data from.
+ *                     enum: [openweather, openmeteo]
+ *                   lat:
+ *                     type: number
+ *                     description: Latitude of the location.
+ *                   lon:
+ *                     type: number
+ *                     description: Longitude of the location.
+ *     responses:
+ *       200:
+ *         description: Weather data fetched successfully
+ *       400:
+ *         description: Bad request due to unsupported service or missing parameters.
+ *       500:
+ *         description: Error fetching weather data
+ */
+app.post('/', handleWeatherRequest);
+
+// New POST endpoint for weather forecasts
+/**
+ * @swagger
+ * /forecasts:
+ *   post:
+ *     summary: Fetch weather forecast data
+ *     description: Fetch weather forecast data using the specified weather service (OpenWeather or Open-Meteo).
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *               - data
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 description: Job Run ID
+ *               data:
+ *                 type: object
+ *                 required:
+ *                   - service
+ *                   - lat
+ *                   - lon
+ *                 properties:
+ *                   service:
+ *                     type: string
+ *                     description: The weather service to fetch forecast data from.
+ *                     enum: [openweather, openmeteo]
+ *                   lat:
+ *                     type: number
+ *                     description: Latitude of the location.
+ *                   lon:
+ *                     type: number
+ *                     description: Longitude of the location.
+ *     responses:
+ *       200:
+ *         description: Forecast data fetched successfully
+ *       400:
+ *         description: Bad request due to unsupported service or missing parameters.
+ *       500:
+ *         description: Error fetching forecast data
+ */
+app.post('/forecasts', handleForecastRequest);
 
 // Start the server
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server is listening on port ${port}`);
+  console.log(`Swagger docs available at http://localhost:${port}/api-docs`);
 });

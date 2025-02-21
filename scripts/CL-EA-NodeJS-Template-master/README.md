@@ -1,6 +1,6 @@
 # Chainlink NodeJS External Adapter Template
 
-This template provides a basic framework for developing Chainlink external adapters in NodeJS. It is tailored to interact with the OpenWeather API to fetch weather data. Comments are included to assist with development and testing of the external adapter. Once the API-specific values (like query parameters and API key authentication) have been added to the adapter, it is very easy to add some tests to verify that the data will be correctly formatted when returned to the Chainlink node. There is no need to use any additional frameworks or to run a Chainlink node in order to test the adapter.
+This template provides a basic framework for developing Chainlink external adapters in NodeJS. It is tailored to interact with the OpenWeather API to fetch weather data. Comments are included to assist with development and testing of the external adapter. Once the API-specific values (like query parameters and API key authentication) have been added to the adapter, it is very easy to add some tests to verify that the data will be correctly formatted when returned to the Chainlink node. There is no need to use any additional frameworks or to run a Chainlink node in order to test the adapter. The returned data, for the avoidance of extreme costs, are stored into the IPFS, so the Oracle Node takes the CID. Each user/invoker has access to these data through the unique IDs of IPFS.
 
 This code is based on the original repository: [CL-EA-NodeJS-Template](https://github.com/thodges-gh/CL-EA-NodeJS-Template).
 
@@ -8,6 +8,7 @@ This code is based on the original repository: [CL-EA-NodeJS-Template](https://g
 
 - `lat`: The latitude of the location to query (required)
 - `lon`: The longitude of the location to query (required)
+- `service`: The longitude of the location to query (optional)
 
 ## Output
 
@@ -57,7 +58,8 @@ This code is based on the original repository: [CL-EA-NodeJS-Template](https://g
     }
   }
  },
- "statusCode": 200
+ "statusCode": 200,
+ "cid":"Qmf2hgPhAogGuQYvJ6agTNXJQbA6g3kvwczyaP5rGAPp2Y"
 }
 ```
 
@@ -70,6 +72,7 @@ yarn install
 ```
 
 Crerate a `.env` file with the API KEY of the Open Weather API service.
+
 ```
 OPENWEATHER_API_KEY= <YOUR_KEY_HERE>
 ```
@@ -91,6 +94,7 @@ yarn start
 ```
 
 ## Health Check of the server
+
 ```
 curl -X GET -H "Content-Type: application/json" "http://localhost:8080/health" 
 ```

@@ -1,4 +1,5 @@
 const { Requester, Validator } = require('@chainlink/external-adapter');
+const { uploadToIPFS } = require('./ipfs.js');   
 require('dotenv').config();
 
 // Define custom parameters to be used by the adapter
@@ -63,12 +64,17 @@ const createRequest = (input, callback, forecast = false) => {
 
   // Make the request and return the response
   Requester.request(config)
-    .then((response) => {
+    .then(async (response) => {
+      // Save the result to IPFS
+      const filename = `weather_data_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      const cid = await uploadToIPFS(JSON.stringify(response.data, null, 2), filename);
+
       callback(response.status, {
         jobRunID,
         data: response.data,
         result: response.data,
         statusCode: response.status,
+        cid: cid // Return the CID
       });
     })
     .catch((error) => {

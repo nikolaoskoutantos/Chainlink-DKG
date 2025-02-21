@@ -1,4 +1,4 @@
-const { handleWeatherRequest, handleForecastRequest } = require('./index');
+const { handleWeatherRequest, handleForecastRequest } = require('./utils/index');
 const express = require('express');
 const bodyParser = require('body-parser');
 const swaggerJsdoc = require('swagger-jsdoc');

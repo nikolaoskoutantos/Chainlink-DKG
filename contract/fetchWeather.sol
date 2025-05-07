@@ -18,7 +18,7 @@ contract FetchWeatherHardcoded is ChainlinkClient, ConfirmedOwner {
         _setChainlinkToken(<TOKEN_ADDRESS>); 
         _setChainlinkOracle(<OPERATOR_ID>); 
         jobId = "JOB_ID";
-        fee = (1 * LINK_DIVISIBILITY) / 10; // 0.1 LINK
+        
     }
 
     /**

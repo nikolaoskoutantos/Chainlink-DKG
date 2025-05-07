@@ -1,4 +1,5 @@
-const { handleWeatherRequest, handleForecastRequest } = require('./utils/index');
+const { handleWeatherRequest, handleForecastRequest,  } = require('./utils/index');
+const {handleHistoricalRequest} = require('./utils/historicalRequest')
 const express = require('express');
 const bodyParser = require('body-parser');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -53,16 +54,16 @@ app.get('/swagger.json', (req, res) => {
  *         description: Server is up and running!
  */
 app.get('/health', (req, res) => {
-  res.status(200).send('Server is up and running!');
+  res.status(200).send('Server is up and running!');//Αdd timestamp to the response.
 });
 
-// Main POST endpoint for current weather
+// Main POST endpoint for current weather (Fetches from BOTH OpenMeteo & OpenWeather)
 /**
  * @swagger
  * /:
  *   post:
  *     summary: Fetch current weather data
- *     description: Fetch current weather data using the specified weather service (OpenWeather or Open-Meteo).
+ *     description: Fetch current weather data from OpenWeather and Open-Meteo.
  *     requestBody:
  *       required: true
  *       content:
@@ -95,21 +96,21 @@ app.get('/health', (req, res) => {
  *                     description: Longitude of the location.
  *     responses:
  *       200:
- *         description: Weather data fetched successfully
+ *         description: Weather data fetched successfully from both OpenWeather and Open-Meteo
  *       400:
- *         description: Bad request due to unsupported service or missing parameters.
+ *         description: Bad request due to missing parameters.
  *       500:
  *         description: Error fetching weather data
  */
 app.post('/', handleWeatherRequest);
 
-// New POST endpoint for weather forecasts
+// New POST endpoint for weather forecasts (ONLY OpenMeteo)
 /**
  * @swagger
  * /forecasts:
  *   post:
  *     summary: Fetch weather forecast data
- *     description: Fetch weather forecast data using the specified weather service (OpenWeather or Open-Meteo).
+ *     description: Fetch weather forecast data using Open-Meteo.
  *     requestBody:
  *       required: true
  *       content:
@@ -133,7 +134,7 @@ app.post('/', handleWeatherRequest);
  *                   service:
  *                     type: string
  *                     description: The weather service to fetch forecast data from.
- *                     enum: [openweather, openmeteo]
+ *                     enum: [openmeteo]
  *                   lat:
  *                     type: number
  *                     description: Latitude of the location.
@@ -144,11 +145,66 @@ app.post('/', handleWeatherRequest);
  *       200:
  *         description: Forecast data fetched successfully
  *       400:
- *         description: Bad request due to unsupported service or missing parameters.
+ *         description: Bad request due to missing parameters.
  *       500:
  *         description: Error fetching forecast data
  */
 app.post('/forecasts', handleForecastRequest);
+
+// New POST endpoint for historical weather data (ONLY OpenMeteo)
+/**
+ * @swagger
+ * /historical:
+ *   post:
+ *     summary: Fetch historical weather data
+ *     description: Fetch historical weather data from OpenMeteo for a given date range.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *               - data
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 description: Job Run ID
+ *               data:
+ *                 type: object
+ *                 required:
+ *                   - service
+ *                   - lat
+ *                   - lon
+ *                 properties:
+ *                   service:
+ *                     type: string
+ *                     description: The weather service to fetch historical data from.
+ *                     enum: [openmeteo]
+ *                   lat:
+ *                     type: number
+ *                     description: Latitude of the location.
+ *                   lon:
+ *                     type: number
+ *                     description: Longitude of the location.
+ *                   start_date:
+ *                     type: string
+ *                     format: date
+ *                     description: Start date for historical data (YYYY-MM-DD). Optional.
+ *                   end_date:
+ *                     type: string
+ *                     format: date
+ *                     description: End date for historical data (YYYY-MM-DD). Optional.
+ *     responses:
+ *       200:
+ *         description: Historical weather data fetched successfully
+ *       400:
+ *         description: Bad request due to missing parameters.
+ *       500:
+ *         description: Error fetching historical data
+ */
+app.post('/historical', handleHistoricalRequest);
 
 // Start the server
 app.listen(port, '0.0.0.0', () => {
